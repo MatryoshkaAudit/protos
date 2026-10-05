@@ -3,7 +3,10 @@
 import grpc
 import warnings
 
-from audit import audit_service_pb2 as audit_dot_audit__service__pb2
+try:
+    from audit import audit_service_pb2 as audit_dot_audit__service__pb2
+except ImportError:
+    from protos.audit import audit_service_pb2 as audit_dot_audit__service__pb2
 
 GRPC_GENERATED_VERSION = '1.71.0'
 GRPC_VERSION = grpc.__version__

@@ -3,7 +3,10 @@
 import grpc
 import warnings
 
-from policy import policy_service_pb2 as policy_dot_policy__service__pb2
+try:
+    from policy import policy_service_pb2 as policy_dot_policy__service__pb2
+except ImportError:
+    from protos.policy import policy_service_pb2 as policy_dot_policy__service__pb2
 
 GRPC_GENERATED_VERSION = '1.71.0'
 GRPC_VERSION = grpc.__version__
