@@ -1,0 +1,104 @@
+syntax = "proto3";
+
+package matryoshka.bom;
+
+// Сервис управления многоуровневыми структурами изделий (BOM)
+service BOMService {
+  // Получить полное дерево BOM с расчётом O-Ring уязвимостей
+  rpc GetBOMTree (GetBOMTreeRequest) returns (GetBOMTreeResponse);
+  
+  // Получить детальные характеристики узла/компонента
+  rpc GetComponentDetail (ComponentDetailRequest) returns (ComponentDetailResponse);
+  
+  // Смоделировать замещение импортного узла отечественным аналогом
+  rpc SimulateAnalogSubstitution (SimulateAnalogRequest) returns (SimulateAnalogResponse);
+  
+  // Добавить или обновить компонент в дереве
+  rpc UpsertComponent (UpsertComponentRequest) returns (UpsertComponentResponse);
+}
+
+message ComponentNode {
+  int64 id = 1;
+  string name = 2;
+  string article = 3;
+  int32 tier = 4;
+  string country_code = 5;
+  string manufacturer = 6;
+  string hs_code = 7; // Код ТН ВЭД ЕАЭС
+  double cost_rub = 8;
+  double quantity = 9;
+  double criticality = 10; // Важность узла от 0.0 до 1.0 (O-Ring)
+  double country_risk = 11; // Риск юрисдикции от 0.0 (РФ/ЕАЭС) до 1.0 (санкционные страны)
+  double analog_availability = 12; // Доступность аналога (1.0 = pin-to-pin, 0.7 = редизайн, 0.0 = нет)
+  double cfi_score = 13; // Critical Failure Index = Criticality * Risk * (1 - AnalogAvail)
+  bool is_chokepoint = 14; // Критическое узкое горлышко (CFI >= 0.8)
+  int64 parent_id = 15;
+  repeated ComponentNode children = 16;
+  string notes = 17;
+}
+
+message GetBOMTreeRequest {
+  int64 product_id = 1;
+  bool include_analogs = 2;
+}
+
+message GetBOMTreeResponse {
+  int64 product_id = 1;
+  string product_name = 2;
+  ComponentNode root = 3;
+  double total_cost_rub = 4;
+  double paper_localization_pct = 5; // Формальная локализация (по счетам первого уровня)
+  double defacto_localization_pct = 6; // Реальная локализация с учётом глубины Tier-3
+  int32 total_components = 7;
+  int32 chokepoints_count = 8;
+  double overall_cfi_max = 9;
+}
+
+message ComponentDetailRequest {
+  int64 component_id = 1;
+}
+
+message ComponentDetailResponse {
+  ComponentNode component = 1;
+  repeated AnalogOption available_analogs = 2;
+}
+
+message AnalogOption {
+  int64 analog_id = 1;
+  string name = 2;
+  string manufacturer = 3;
+  string country_code = 4;
+  double unit_cost_rub = 5;
+  double redesign_cost_rub = 6;
+  int32 lead_time_days = 7;
+  double compatibility_score = 8; // 1.0 - прямой аналог, 0.7 - требует перепроектирования
+  string description = 9;
+}
+
+message SimulateAnalogRequest {
+  int64 component_id = 1;
+  int64 analog_id = 2;
+}
+
+message SimulateAnalogResponse {
+  bool success = 1;
+  int64 component_id = 2;
+  double old_cfi = 3;
+  double new_cfi = 4;
+  double new_defacto_localization_pct = 5;
+  double cost_delta_rub = 6;
+  double redesign_investment_rub = 7;
+  int32 implementation_days = 8;
+  string commentary = 9;
+}
+
+message UpsertComponentRequest {
+  int64 product_id = 1;
+  ComponentNode component = 2;
+}
+
+message UpsertComponentResponse {
+  bool success = 1;
+  int64 component_id = 2;
+  string message = 3;
+}

@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "matryoshka-protos"
+version = "0.1.0"
+description = "gRPC protobuf contracts, Python stubs and Pydantic DTOs for MatryoshkaAudit platform"
+authors = [{ name = "MatryoshkaAudit Engineering Team" }]
+requires-python = ">=3.10"
+dependencies = [
+    "grpcio>=1.60.0",
+    "grpcio-tools>=1.60.0",
+    "protobuf>=4.25.0",
+    "pydantic>=2.5.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["protos*"]

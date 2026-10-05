@@ -1,0 +1,102 @@
+syntax = "proto3";
+
+package matryoshka.policy;
+
+// Сервис нормативного аудита ПП РФ № 719 и моделирования стресс-сценариев
+service PolicyService {
+  // Провести официальную оценку по ПП РФ № 719 (баллы + адвалорная доля)
+  rpc EvaluatePP719 (EvaluatePP719Request) returns (EvaluatePP719Response);
+  
+  // Провести аудит скрытой зависимости (де-факто локализация vs официальная)
+  rpc AuditDeFactoLocalization (AuditDeFactoRequest) returns (AuditDeFactoResponse);
+  
+  // Смоделировать санкционный шок (запрет импорта/логистики из выбранных юрисдикций)
+  rpc SimulateSanctionsShock (SimulateSanctionsShockRequest) returns (SimulateSanctionsShockResponse);
+  
+  // Сгенерировать ИИ-сценарий геополитического стресс-теста (OpenRouter LLM)
+  rpc GenerateGeopoliticalScenario (GenerateGeopoliticalScenarioRequest) returns (GenerateGeopoliticalScenarioResponse);
+}
+
+message EvaluatePP719Request {
+  int64 product_id = 1;
+  string industry_code = 2; // Например, "28.3" - Сельхоз/Лесозаготовительное машиностроение
+}
+
+message EvaluatePP719Response {
+  int64 product_id = 1;
+  bool is_compliant = 2; // Соответствует ли критериям российского происхождения
+  int32 achieved_points = 3; // Набранные баллы по операциям
+  int32 required_points = 4; // Минимальный порог баллов по ПП РФ № 719 (на текущий год)
+  double ad_valorem_pct = 5; // Адвалорная доля добавленной стоимости в РФ
+  double required_ad_valorem_pct = 6; // Минимально допустимая адвалорная доля (обычно 50-65%)
+  repeated PointBreakdown operation_breakdown = 7;
+  string status_decision = 8;
+  string certificate_recommendation = 9;
+}
+
+message PointBreakdown {
+  string operation_name = 1;
+  int32 points_awarded = 2;
+  bool verified = 3;
+  string evidence_doc = 4;
+}
+
+message AuditDeFactoRequest {
+  int64 product_id = 1;
+  bool include_chokepoints = 2;
+}
+
+message AuditDeFactoResponse {
+  int64 product_id = 1;
+  double paper_localization_pct = 2;
+  double defacto_localization_pct = 3;
+  double vulnerability_gap_pct = 4; // Разрыв: paper - defacto
+  int32 critical_chokepoints_found = 5;
+  repeated ChokepointItem chokepoints = 6;
+  string o_ring_summary = 7;
+}
+
+message ChokepointItem {
+  int64 component_id = 1;
+  string component_name = 2;
+  int32 tier = 3;
+  string country = 4;
+  double cost_rub = 5;
+  double cfi_score = 6;
+  string risk_reason = 7;
+  string potential_paralysis_scope = 8;
+}
+
+message SimulateSanctionsShockRequest {
+  int64 product_id = 1;
+  repeated string blocked_countries = 2; // ["US", "DE", "FR", "CH", "TW", "JP"]
+  repeated string blocked_categories = 3; // ["микроконтроллеры", "гидравлика", "топливная аппаратура"]
+  bool enforce_secondary_sanctions = 4; // Включая блокировку транзита через Казахстан/ОАЭ
+}
+
+message SimulateSanctionsShockResponse {
+  int64 product_id = 1;
+  string shock_name = 2;
+  double production_paralysis_risk_pct = 3; // Вероятность полной остановки конвейера
+  int32 blocked_components_count = 4;
+  double blocked_value_rub = 5;
+  repeated ChokepointItem blocked_items = 6;
+  int32 estimated_days_until_stockout = 7;
+  string mitigation_roadmap = 8;
+}
+
+message GenerateGeopoliticalScenarioRequest {
+  string event_description = 1; // "14-й пакет санкций ЕС: запрет параллельного импорта РЭА через СНГ"
+  string target_industry = 2;
+  int64 product_id = 3;
+}
+
+message GenerateGeopoliticalScenarioResponse {
+  string scenario_id = 1;
+  string scenario_title = 2;
+  string ai_executive_summary = 3;
+  string dynamic_policy_json = 4;
+  double calculated_impact_severity = 5;
+  repeated string affected_supply_chains = 6;
+  repeated string recommended_urgent_actions = 7;
+}

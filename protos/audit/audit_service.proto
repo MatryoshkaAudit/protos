@@ -1,0 +1,76 @@
+syntax = "proto3";
+
+package matryoshka.audit;
+
+// Сервис доверенного журнала аудита и выдачи сертификатов соответствия
+service AuditService {
+  // Записать событие аудита в неизменяемый лог
+  rpc WriteAuditEvent (WriteAuditEventRequest) returns (WriteAuditEventResponse);
+  
+  // Запросить историю аудита по сущности
+  rpc QueryAuditTrail (QueryAuditTrailRequest) returns (QueryAuditTrailResponse);
+  
+  // Выдать официальное цифровое заключение Минпромторга / ТПП
+  rpc IssueCertificate (IssueCertificateRequest) returns (IssueCertificateResponse);
+}
+
+message WriteAuditEventRequest {
+  string event_type = 1; // "BOM_RECALCULATION", "SANCTIONS_SHOCK_TEST", "CERTIFICATE_ISSUED", "ANALOG_SUBSTITUTED"
+  int64 actor_id = 2;
+  string actor_role = 3; // "enterprise_engineer", "minpromtorg_auditor", "system_automator"
+  string resource_type = 4; // "product", "component", "certificate"
+  int64 resource_id = 5;
+  string details_json = 6;
+  string ip_address = 7;
+}
+
+message WriteAuditEventResponse {
+  bool success = 1;
+  int64 audit_id = 2;
+  string hash_sha256 = 3;
+  string recorded_at = 4;
+}
+
+message QueryAuditTrailRequest {
+  string resource_type = 1;
+  int64 resource_id = 2;
+  string date_from = 3;
+  string date_to = 4;
+  int32 limit = 5;
+  int32 offset = 6;
+}
+
+message AuditRecord {
+  int64 id = 1;
+  string event_type = 2;
+  int64 actor_id = 3;
+  string actor_role = 4;
+  string resource_type = 5;
+  int64 resource_id = 6;
+  string details_json = 7;
+  string recorded_at = 8;
+  string hash_sha256 = 9;
+}
+
+message QueryAuditTrailResponse {
+  repeated AuditRecord records = 1;
+  int32 total_count = 2;
+}
+
+message IssueCertificateRequest {
+  int64 product_id = 1;
+  string certificate_type = 2; // "ST-1", "PP_719_ORIGIN", "SUPPLY_CHAIN_RESILIENCE"
+  int32 valid_months = 3;
+  string certified_by = 4;
+}
+
+message IssueCertificateResponse {
+  bool is_issued = 1;
+  string certificate_number = 2; // e.g. "RU-МПТ-719/2026-44819"
+  string qr_verification_url = 3;
+  string issued_at = 4;
+  string expires_at = 5;
+  double certified_defacto_loc = 6;
+  int32 certified_points = 7;
+  string digital_signature_hash = 8;
+}
